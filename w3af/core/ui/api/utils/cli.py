@@ -82,21 +82,36 @@ def parse_arguments():
                                      ' as part of a YAML configuration file'
                                      ' using the "-c" command line argument.')
 
+    parser.add_argument('--adduser',
+                        dest="addUser",
+                        action="store_true",
+                        help="Add User. Specify the username and  password (Eg: -u user1 -p password )"
+                        )
+
+    parser.add_argument('--deleteuser',
+                        dest="deleteUser",
+                        action="store_true",
+                        help="Delete User Specify the username (Eg: -u user1 )"
+                        )
+
+    parser.add_argument('--changepw',
+                        dest="changePassword",
+                        action="store_true",
+                        help="Change Password. Specify the username and new password (Eg: -u user1 -p newpassword)"
+                        )
+
     opts.add_argument('-p',
                       required=False,
                       default=False,
                       dest='password',
-                      help='SHA512-hashed password for HTTP basic'
-                           ' authentication. Linux or Mac users can generate'
-                           ' the hash running:\n'
-                           ' echo -n "password" | sha512sum')
+                      help='Specify a password')
 
     opts.add_argument('-u',
                       required=False,
                       dest='username',
                       default=False,
                       help='Username required for basic auth. If not '
-                           'specified, this will be set to "admin".')
+                           'specified, this will be set to "w3af".')
 
     opts.add_argument('-v',
                       required=False,
@@ -163,32 +178,24 @@ def process_cmd_args_config(app):
         if not k in app.config:
             app.config[k] = DEFAULTS[k]
 
-    if 'PASSWORD' in app.config:
-        try:
-            # Check password has been specified and is a 512-bit hex string
-            # (ie, that it looks like a SHA512 hash)
-            int(app.config['PASSWORD'], 16) and len(app.config['PASSWORD']) == 128
-        except:
-            raise ArgumentTypeError('Error: Please specify a valid'
-                                    ' SHA512-hashed plaintext as password,'
-                                    ' either inside a config file with "-c" or'
-                                    ' using the "-p" flag.')
-
     app.config['HOST'], app.config['PORT'] = parse_host_port(app.config['HOST'],
                                                              app.config['PORT'])
 
     if (app.config['HOST'] != '127.0.0.1' and
         app.config['HOST'] != 'localhost'):
 
-        print('')
-        if not 'PASSWORD' in app.config:
-            print('CAUTION! Running this API on a public IP might expose your'
-                  ' system to vulnerabilities such as arbitrary file reads'
-                  ' through file:// protocol specifications in target URLs and'
-                  ' scan profiles.\n\n'
-                  'We recommend enabling HTTP basic authentication by'
-                  ' specifying a password on the command line (with'
-                  ' "-p <SHA512 hash>") or in a configuration file.\n')
 
+        if not args.password:
+            #from w3af.core.ui.api.utils.auth import defaultUserExists
+            #if defaultUserExists():
+                print('CAUTION! Running this API on a public IP might expose your'
+                      ' system to vulnerabilities such as arbitrary file reads'
+                      ' through file:// protocol specifications in target URLs and'
+                      ' scan profiles.\n\n'
+                      'We recommend you to change/delete the Default Credentials - Username:w3af and password:InsecurePassword \n')
+
+        if args.disableSSL:
+            print('CAUTION! Traffic to this API is not encrypted and could be'
+                  ' sniffed.\n')
 
     return args
